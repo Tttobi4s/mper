@@ -8,30 +8,34 @@ s.bind(('127.0.0.1', 8002))
 s.listen(10)
 
 
-cnt, batch, dataspace_filter = 2000000, 1000, 0
+cnt, batch_cnt, dataspace_filter = 2000000, 1000, 0
 data_secret_share = [0] * cnt
 lock = threading.Lock()
+
 
 def receive_1(sock, addr):
     print('Step1 :  Accept new connection from %s:%s...' % addr)
     global dataspace_filter
     lock.acquire()
     try:
-        dataspace_filter = dataspace_filter ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+        dataspace_filter = dataspace_filter ^ int.from_bytes(
+            sock.recv(cnt // 8), 'big')
     finally:
         lock.release()
 
 
 def receive_128(sock, addr):
     print('Step2 : Accept new connection from %s:%s...' % addr)
-    batch_cnt = cnt // batch
-    for i in range(batch):
+    batch_index = 0
+    while True:
         data = sock.recv(16 * batch_cnt)
         if not data:
             break
-        for j in range(batch_cnt):
-            data_secret_share[i * batch_cnt + j] = data_secret_share[i *
-                                                                     batch_cnt + j] ^ int.from_bytes(data[16 * j: 16 * j + 16], 'big')
+        real_batch_cnt = len(data) // 16
+        for i in range(real_batch_cnt):
+            data_secret_share[batch_index * batch_cnt + i] = data_secret_share[batch_index *
+                                                                               batch_cnt + i] ^ int.from_bytes(data[16 * i: 16 * i + 16], 'big')
+        batch_index += 1
     sock.close()
 
 
@@ -55,13 +59,17 @@ t2.join()
 t3.join()
 
 sock4, addr4 = s.accept()
-dataspace_filter = int.from_bytes(sock4.recv(cnt // 8), 'big') ^ dataspace_filter
+dataspace_filter = int.from_bytes(
+    sock4.recv(cnt // 8), 'big') ^ dataspace_filter
 sock1.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
 sock2.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
 sock3.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
 dataspace_filter = bin(dataspace_filter)[2:]
-if len(dataspace_filter) < cnt:
-    dataspace_filter = "0" * (cnt - len(dataspace_filter)) + dataspace_filter
+dataspace_filter = "0" * (cnt - len(dataspace_filter)) + dataspace_filter
+new_cnt = dataspace_filter.count("0")
+print(new_cnt)
+sock4.send(("%d" % new_cnt).encode('utf-8'))
+
 
 # 传输 128 位随机比特
 t4 = threading.Thread(target=receive_128, args=(sock1, addr1))
@@ -79,17 +87,20 @@ t5.join()
 t6.join()
 
 # 计算结果
-batch_cnt = cnt // batch
-res = 0
-real_cnt = dataspace_filter.count("0")
-for i in range(batch):
+batch_index, res = 0, 0
+while True:
     data = sock4.recv(16 * batch_cnt)
-    for j in range(batch_cnt):
-        data_secret_share[i * batch_cnt + j] = data_secret_share[i *
-                                                                 batch_cnt + j] ^ int.from_bytes(data[16 * j: 16 * j + 16], 'big')
-        if data_secret_share[i * batch_cnt + j] == 0 and (i * batch_cnt + j) < real_cnt:
+    if not data:
+        break
+    real_batch_cnt = len(data) // 16
+    for i in range(real_batch_cnt):
+        data_secret_share[batch_index * batch_cnt + i] = data_secret_share[batch_index *
+                                                                           batch_cnt + i] ^ int.from_bytes(data[16 * i: 16 * i + 16], 'big')
+        if data_secret_share[batch_index * batch_cnt + i] == 0:
             res += 1
-
+    batch_index += 1
 print(res)
+
+
 end = time.time()
 print(end - start)

@@ -3,12 +3,14 @@ import random
 import time
 from numpy import byte
 
-s = "123"
-if len(s) < 10:
-    s = "0" * (10 - len(s)) + s
-print(s)
+blist = []
 
-b = b"123"
-print(len(b))
- 
-print("12312".count("12"))
+blist.append(b'123')
+blist.append(b'123')
+blist.append(b'123')
+
+print(len(blist))
+print(b''.join(blist))
+
+blist.clear()
+print(blist)
