@@ -2,25 +2,29 @@ import socket
 import threading
 import time
 
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('127.0.0.1', 8002))
 s.listen(10)
 
-cnt, batch = 2000000, 1000
-data_secret_share = [0] * cnt
-dataspace = 0
 
+cnt, batch, dataspace_filter = 2000000, 1000, 0
+data_secret_share = [0] * cnt
+lock = threading.Lock()
 
 def receive_1(sock, addr):
     print('Step1 :  Accept new connection from %s:%s...' % addr)
-    global dataspace
-    dataspace = dataspace ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+    global dataspace_filter
+    lock.acquire()
+    try:
+        dataspace_filter = dataspace_filter ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+    finally:
+        lock.release()
 
 
 def receive_128(sock, addr):
     print('Step2 : Accept new connection from %s:%s...' % addr)
     batch_cnt = cnt // batch
-
     for i in range(batch):
         data = sock.recv(16 * batch_cnt)
         if not data:
@@ -51,13 +55,13 @@ t2.join()
 t3.join()
 
 sock4, addr4 = s.accept()
-dataspace = int.from_bytes(sock4.recv(cnt // 8), 'big') ^ dataspace
-sock1.send(dataspace.to_bytes(cnt // 8,'big'))
-sock2.send(dataspace.to_bytes(cnt // 8,'big'))
-sock3.send(dataspace.to_bytes(cnt // 8,'big'))
-dataspace = bin(dataspace)[2:]
-if len(dataspace) < cnt:
-    dataspace = "0" * (cnt - len(dataspace)) + dataspace
+dataspace_filter = int.from_bytes(sock4.recv(cnt // 8), 'big') ^ dataspace_filter
+sock1.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
+sock2.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
+sock3.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
+dataspace_filter = bin(dataspace_filter)[2:]
+if len(dataspace_filter) < cnt:
+    dataspace_filter = "0" * (cnt - len(dataspace_filter)) + dataspace_filter
 
 # 传输 128 位随机比特
 t4 = threading.Thread(target=receive_128, args=(sock1, addr1))
@@ -77,8 +81,7 @@ t6.join()
 # 计算结果
 batch_cnt = cnt // batch
 res = 0
-real_cnt = dataspace.count("0")
-print(real_cnt)
+real_cnt = dataspace_filter.count("0")
 for i in range(batch):
     data = sock4.recv(16 * batch_cnt)
     for j in range(batch_cnt):

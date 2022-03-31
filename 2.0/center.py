@@ -1,19 +1,26 @@
 import socket
 import threading
+from typing import final
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('127.0.0.1', 8000))
 s.listen(10)
 
-cnt, batch = 2000000, 1000
+
+cnt, batch, dataspace_filter = 2000000, 1000, 0
 data_secret_share = [0] * cnt
-dataspace = 0
+lock = threading.Lock()
 
 
 def receive_1(sock, addr):
     print('Step1 :  Accept new connection from %s:%s...' % addr)
-    global dataspace
-    dataspace = dataspace ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+    global dataspace_filter
+    lock.acquire()
+    try:
+        dataspace_filter = dataspace_filter ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+    finally:
+        lock.release()
 
 
 def receive_128(sock, addr):
@@ -49,7 +56,7 @@ t3.join()
 
 s_csp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_csp.connect(('127.0.0.1', 8002))
-s_csp.send(dataspace.to_bytes(cnt // 8, 'big'))
+s_csp.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
 
 # 传输 128 位随机比特
 t4 = threading.Thread(target=receive_128, args=(sock1, addr1))
