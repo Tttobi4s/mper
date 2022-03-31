@@ -60,6 +60,7 @@ s_csp.connect(('127.0.0.1', 8002))
 s_csp.send(dataspace_filter.to_bytes(cnt // 8, 'big'))
 new_cnt = int(s_csp.recv(1024).decode('utf-8'))
 
+
 # 传输 128 位随机比特
 t4 = threading.Thread(target=receive_128, args=(sock1, addr1))
 

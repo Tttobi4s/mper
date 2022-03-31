@@ -86,6 +86,7 @@ t4.join()
 t5.join()
 t6.join()
 
+
 # 计算结果
 batch_index, res = 0, 0
 while True:
