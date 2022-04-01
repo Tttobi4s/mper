@@ -8,7 +8,7 @@ data_p1 = np.random.randint(0, 2, cnt)
 s_csp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_center = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_csp.connect(('127.0.0.1', 8002))
-s_center.connect(('127.0.0.1', 8000))
+s_center.connect(('127.0.0.1', 8001))
 
 for i in range(batch):
     tmp_center, tmp_csp = b'', b''

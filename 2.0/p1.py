@@ -6,18 +6,20 @@ import numpy as np
 cnt, batch_cnt = 2000000, 1000
 data_p1 = np.random.randint(0, 2, cnt)
 
+
 s_csp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_center = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_csp.connect(('127.0.0.1', 8002))
-s_center.connect(('127.0.0.1', 8000))
+s_center.connect(('127.0.0.1', 8001))
 
 
 # 传输单比特过滤
 tmp_center_1, tmp_csp_1 = [], []
 for i in range(cnt):
     if data_p1[i] == 1:
-        tmp_center_1.append("0")
-        tmp_csp_1.append("0")
+        r = random.getrandbits(1)
+        tmp_center_1.append(str(r))
+        tmp_csp_1.append(str(r))
     else:
         tmp_center_1.append(str(random.getrandbits(1)))
         tmp_csp_1.append(str(random.getrandbits(1)))

@@ -3,7 +3,7 @@ import threading
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('127.0.0.1', 8000))
+s.bind(('127.0.0.1', 8001))
 s.listen(10)
 
 
@@ -17,7 +17,8 @@ def receive_1(sock, addr):
     global dataspace_filter
     lock.acquire()
     try:
-        dataspace_filter = dataspace_filter ^ int.from_bytes(sock.recv(cnt // 8), 'big')
+        dataspace_filter = dataspace_filter ^ int.from_bytes(
+            sock.recv(cnt // 8), 'big')
     finally:
         lock.release()
 
@@ -83,7 +84,7 @@ for i in range(new_cnt):
     if len(tmp) == batch_cnt:
         s_csp.send(b''.join(tmp))
         tmp.clear()
-    tmp.append(data_secret_share[i].to_bytes(16,'big'))
+    tmp.append(data_secret_share[i].to_bytes(16, 'big'))
 s_csp.send(b''.join(tmp))
 
 

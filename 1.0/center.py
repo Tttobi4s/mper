@@ -2,7 +2,7 @@ import socket
 import threading
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('127.0.0.1', 8000))
+s.bind(('127.0.0.1', 8001))
 s.listen(10)
 
 cnt, batch = 2000000, 1000
