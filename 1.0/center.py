@@ -1,23 +1,35 @@
 import socket
 import threading
 
+
+cnt = 2000000
+data_secret_share = 0
+lock = threading.Lock()
+
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+s.setsockopt(
+    socket.SOL_SOCKET,
+    socket.SO_SNDBUF,
+    16 * cnt + 10)
+s.setsockopt(
+    socket.SOL_SOCKET,
+    socket.SO_RCVBUF,
+    16 * cnt + 10)
 s.bind(('127.0.0.1', 8001))
 s.listen(10)
 
-cnt, batch = 2000000, 1000
-data_secret_share = [0] * cnt
 
 def receive_128(sock, addr):
-    print('Step2 : Accept new connection from %s:%s...' % addr)
-    batch_cnt = cnt // batch
-    for i in range(batch):
-        data = sock.recv(16 * batch_cnt)
-        if not data:
-            break
-        for j in range(batch_cnt):
-            data_secret_share[i * batch_cnt + j] = data_secret_share[i *
-                                                                     batch_cnt + j] ^ int.from_bytes(data[16 * j: 16 * j + 16], 'big')
+    print('Accept new connection from %s:%s...' % addr)
+    data = sock.recv(16 * cnt)
+    lock.acquire()
+    global data_secret_share
+    try:
+        data_secret_share = data_secret_share ^ int.from_bytes(data, 'big')
+    finally:
+        lock.release()
     sock.close()
 
 
@@ -43,11 +55,5 @@ t3.join()
 # 发送秘密份额给csp
 s_csp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_csp.connect(('127.0.0.1', 8002))
-for i in range(batch):
-    batch_cnt = cnt // batch
-    tmp = b''
-    for j in range(batch_cnt * i, batch_cnt * i + batch_cnt):
-        tmp = tmp + data_secret_share[j].to_bytes(16, 'big')
-    s_csp.send(tmp)
-
+s_csp.send(data_secret_share.to_bytes(16 * cnt,'big'))
 s_csp.close()
