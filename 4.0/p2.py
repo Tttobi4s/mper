@@ -39,7 +39,7 @@ for ele in data_p2:
 for i in range(8):
     tmp_data = 65536 * [0]
     for m in md5_data_p2:
-        tmp_data[int(m[4 * i: 4 * i + 4], base=16)] = 1
+        tmp_data[int(m[4 * i : 4 * i + 4], base=16)] = 1
 
     tmp_center, tmp_csp = [], []
     for j in range(65536):

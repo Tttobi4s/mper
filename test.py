@@ -20,3 +20,5 @@ print(len(data_p2))
 data_p3 = np.random.randint(0, pow(2, 24), pow(2,20), dtype=np.int64)
 print(len(data_p3))
 print(len(reduce(np.intersect1d,[data_p1,data_p2,data_p3])))
+
+print("123".index("1",0))
