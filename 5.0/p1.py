@@ -3,7 +3,7 @@ import random
 import numpy as np
 from hashlib import md5
 
-
+np.random.seed(100)
 data_p1 = np.random.randint(0, pow(2, 24), pow(2, 20), dtype=np.int64)
 
 
@@ -14,19 +14,19 @@ s_center.connect(('127.0.0.1', 8001))
 s_csp.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_SNDBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_csp.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_RCVBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_center.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_SNDBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_center.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_RCVBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 
 
 md5_data_p1 = []
@@ -36,13 +36,13 @@ for ele in data_p1:
     md5_data_p1.append(m)
 
 
-for i in range(14):
-    tmp_data = 16777216 * [0]
+for i in range(9):
+    tmp_data = 1048576 * [0]
     for m in md5_data_p1:
-        tmp_data[int(m[2 * i : 2 * i + 6], base=16)] = 1
+        tmp_data[int(m[3 * i : 3 * i + 5], base=16)] = 1
 
     tmp_center, tmp_csp = [], []
-    for j in range(16777216):
+    for j in range(1048576):
         if tmp_data[j] == 1:
             r = random.getrandbits(128)
             tmp_csp.append(r.to_bytes(16, 'big'))
@@ -53,27 +53,27 @@ for i in range(14):
     s_csp.send(b''.join(tmp_csp))
     s_center.send(b''.join(tmp_center))
 
-
 s_center.close()
 
 # 验证数据集
 res = []
-for i in range(14):
-    data = s_csp.recv(16 * 16777216)
+for i in range(9):
+    data = s_csp.recv(16 * 1048576)
     str_sec = bin(int.from_bytes(data, 'big'))[2:]
-    str_sec = (128 * 16777216 - len(str_sec)) * "0" + str_sec
-    tmp_res = [0] * 16777216
-    for j in range(16777216):
+    str_sec = (128 * 1048576 - len(str_sec)) * "0" + str_sec
+    tmp_res = [0] * 1048576
+    for j in range(1048576):
         if str_sec[128 * j: 128 * j + 128] == 128 * "0":
             tmp_res[j] = 1
     res.append(tmp_res)
 
 cnt = 0
 for m in md5_data_p1:
-    for i in range(14):
-        if res[i][int(m[2 * i: 2 * i + 6],base=16)] == 0:
+    for i in range(9):
+        if res[i][int(m[3 * i: 3 * i + 5], base=16)] == 0:
             break
-    cnt += 1
+        if i == 8:
+            cnt += 1
 print(cnt)
 
 s_csp.close()

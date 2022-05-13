@@ -3,7 +3,7 @@ import random
 import numpy as np
 from hashlib import md5
 
-
+np.random.seed(102)
 data_p3 = np.random.randint(0, pow(2, 24), pow(2, 20), dtype=np.int64)
 
 
@@ -14,19 +14,19 @@ s_center.connect(('127.0.0.1', 8001))
 s_csp.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_SNDBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_csp.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_RCVBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_center.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_SNDBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 s_center.setsockopt(
     socket.SOL_SOCKET,
     socket.SO_RCVBUF,
-    16 * 16777216 + 10)
+    16 * 1048576 + 10)
 
 
 md5_data_p3 = []
@@ -36,13 +36,13 @@ for ele in data_p3:
     md5_data_p3.append(m)
 
 
-for i in range(14):
-    tmp_data = 16777216 * [0]
+for i in range(9):
+    tmp_data = 1048576 * [0]
     for m in md5_data_p3:
-        tmp_data[int(m[2 * i : 2 * i + 4], base=16)] = 1
+        tmp_data[int(m[3 * i : 3 * i + 5], base=16)] = 1
 
     tmp_center, tmp_csp = [], []
-    for j in range(16777216):
+    for j in range(1048576):
         if tmp_data[j] == 1:
             r = random.getrandbits(128)
             tmp_csp.append(r.to_bytes(16, 'big'))

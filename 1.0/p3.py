@@ -1,7 +1,6 @@
 import socket
 import random
 import numpy as np
-import time
 
 
 cnt = 2000000
@@ -29,7 +28,6 @@ s_center.setsockopt(
     socket.SO_RCVBUF,
     16 * cnt + 10)
 
-print(time.time())
 tmp_center, tmp_csp = [], []
 for i in range(cnt):
     if data_p3[i] == 1:
@@ -39,7 +37,6 @@ for i in range(cnt):
     else:
         tmp_csp.append(random.getrandbits(128).to_bytes(16, 'big'))
         tmp_center.append(random.getrandbits(128).to_bytes(16, 'big'))
-print(time.time())
 s_csp.send(b''.join(tmp_csp))
 s_center.send(b''.join(tmp_center))
 
